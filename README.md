@@ -1,25 +1,80 @@
-# SPLITREADER
+## SPLITREADER
 
-_If you have any question or comment please reach me through the channels listed [there](http://pbaduel.com/about)._
+Efficient detection of transposable element insertion polymorphisms between genomes using short-read sequencing data.
 
-This public repository contains the scripts for running the SPLITREADER pipeline initially developped by [Quadrana et al. eLife 2016](https://doi.org/10.7554/eLife.15716),  further improved by [Baduel et al. MMB 2021](https://doi.org/10.1007/978-1-0716-1134-0_15), and implemented in [Baduel et al. Genome Biol 2021](https://doi.org/10.1186/s13059-021-02348-5)
+### Installing Conda
 
-### [SPLITREADER_v1](/SPLITREADER_v1)
+- **Windows:** [Installation Conda on Windows](https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html)
 
-This folder contains the scripts to detect non-reference transposable element insertions from short-read sequencing data as described in [Baduel et al. MMB 2021](https://doi.org/10.1007/978-1-0716-1134-0_15). <br/>
-Accessory files and wrapper scripts are also available in [/thaliana](/SPLITREADER_v1/thaliana) to run the SPLITREADER pipeline on the _A. thaliana_ genome. <br/>
+- **Linux:** [Installation Conda on Linux](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html)
 
-### [SPLITREADER_v1.2](/SPLITREADER_v1.2)
+### Getting the SPLITREADER
 
-This folder contains a snakemake version of the SPLITREADER pipeline produced by [@aurelpetit](https://github.com/aurelpetit) for easier portability and management of dependencies. 
+`git clone https://github.com/PEpiTE-team/SPLITREADER`
 
-### [SPLITREADER_v2](/SPLITREADER_v2)
+### Setting and running the SPLITREADER 
 
-This folder contains a improved version of the SPLITREADER_v1.2, by adding a new filter based on the complexity of the reads, significantly increasing the precision of the tool.
+#### First Step: organizing the workspace with the needed meta files
 
-## For citation
+Create a `$WORKSPACE_DIR` from where you will run the SPLITREADER pipeline.
 
-**Baduel P**, Quadrana L, Colot V. Efficient detection of transposable element insertion polymorphisms between genomes using short-read sequencing data. Plant Transposable Elements, Methods in Molecular Biology, [10.1007/978-1-0716-1134-0_15](https://doi.org/10.1007/978-1-0716-1134-0_15), 04/2021.
+In this `$WORKSPACE_DIR`, you will need the following meta files:
 
-**Quadrana L**, Bortolini Silveira A, Mayhew GF, LeBlanc C, Martienssen R, Jeddeloh JA, Colot V. The Arabidopsis thaliana mobilome and its impact at the species level. eLife, [10.1007/978-1-0716-1134-0_15](https://doi.org/10.7554/eLife.15716), 06/2016.
+**in `WORKSPACE_DIR/Reference`**
 
+- `$GENOME.fasta` file with the reference genome sequence (for *A. thaliana* the TAIR10 reference genome fasta can be downloaded **[here](https://www.arabidopsis.org/download/index-auto.jsp?dir=%2Fdownload_files%2FGenes%2FTAIR10_genome_release%2FTAIR10_chromosome_files))**
+
+**in `WORKSPACE_DIR/TE_sequence`**
+
+- `superfamily_TSD.txt` : *Tab-delimited file with superfamilies in the 1st column and their respective Target Site Duplication (TSD) lengths in the 2nd column.*
+- `TE-list.txt` : *file with a list of the names of the TEs annotated in the reference genome.*
+- `$TE_LIB.fasta` : *file with the sequence of all the TEs annotated in the reference genome.*
+- `TEfamily-superfamily.txt` : *file with TE names in the 1st column and their respective superfamily in the 2nd column.*
+- `$TE_ANNOTATION.gff`: *file of the TEs annotated.*
+
+#### Second step: setting up the variables
+
+Fill in the `config.yml` file with the full paths corresponding to the location of your input and meta files ( `$WORKSPACE_DIR`, `$REFERENCE_DIR`, etc) and define the names of the filename variables ( `$GENOME`, `$TE_LIB`, etc) to match those above.
+
+In the `PARAMS`, you have to define the `$DUST` and `$ENTROPY` variables, two metrics from the [PRINSEQ suite](https://prinseq.sourceforge.net/manual.html) ([Schmieder R, *et al.*, Bioinformatics, 2011](https://doi.org/10.1093/bioinformatics/btr026)) for which reflect different aspects of the sequence complexity in reads. In SPLITREADER_part1, reads with a DUST score above the `$DUST` threshold, and an ENTROPY below the `$ENTROPY` threshold will be removed. 
+
+The authors recommend the values at `$DUST: 0.07` and `$ENTROPY: 0.7`. Those values are between 0 and 1, because here the improved version [PRINSEQ++](https://github.com/Adrian-Cantu/PRINSEQ-plus-plus) is implemented.
+
+If you want to keep all the reads, you can set `$DUST: 1` and `$ENTROPY: 0`.
+
+You also have the choice, in `$CHOICE`, of using the Negative coverage filter or not. If `$NEGATIVE_COVERAGE` is set to `False`, you can put any value for `$DPrefmin` as it will not be used.
+
+#### Third step: running the pipeline
+
+1. **Creating the conda environment :**
+
+    ```bash
+    conda env create -f SPLITREADER.yml
+    conda activate SPLITREADER
+    ```
+
+2. **Running the snakefile :**
+
+    ```bash
+    snakemake --snakefile SPLITREADER.snk --cores X
+    ```
+`--cores X` : X being the number of cores you allocate for the run. 
+
+--------------
+#### About the management of memory usage :
+
+In `config.yml` you can give a value for `$MEMORY`, that specify the RAM provided for the SPLITREADER. This is very important, specially for the PART1.
+
+> [!IMPORTANT]
+> For instance : 
+> - For _A. thaliana_ samples with 30X Coverage, and a genome size of 120Mb : a memory of **15G per sample** should be fine.
+> - Another example for _Quercus Robur_ samples, with 120X coverage, and a genome size of 789Mb : a memory of **250-300G per sample** is necessary! 
+
+#### About the multi-threading :
+
+In `config.yml` you can give a value for `$SNAKEMAKE_THREADS`, that specify the number of threads that some rules can use. For instance, if `$SNAKEMAKE_THREADS: 10` each multi_threadable rule will use 10 threads.
+
+> [!IMPORTANT]
+> Be careful with the number of cores you give via `--cores X` :
+> - If `--cores 10` and `$SNAKEMAKE_THREADS: 10`, then each multi-threadable rule will use 10 threads, but 10 threads are allocated here. So only one sample of your data will be treated at once.
+> - If `--cores 10` and `$SNAKEMAKE_THREADS: 2`, then each multi-threadable rule will use 2 threads, and 10 threads are allocated, so 5 samples will be treated at once. 
