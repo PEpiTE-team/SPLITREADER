@@ -9,13 +9,6 @@ This public repository contains the SPLITREADER pipeline initially developped by
 
 This v2 a improved version of the SPLITREADER pipeline, packaged using snakemake produced by [@aurelpetit](https://github.com/aurelpetit) for easier portability and management of dependencies. The main improvement is the adding of a filter removing the low-complexity reads, containing simple sequences (e.g. ATATATATATATAT) that were causing false positive. 
 
-### For citation
-
-**Baduel P**, Quadrana L, Colot V. Efficient detection of transposable element insertion polymorphisms between genomes using short-read sequencing data. Plant Transposable Elements, Methods in Molecular Biology, [10.1007/978-1-0716-1134-0_15](https://doi.org/10.1007/978-1-0716-1134-0_15), 04/2021.
-
-**Quadrana L**, Bortolini Silveira A, Mayhew GF, LeBlanc C, Martienssen R, Jeddeloh JA, Colot V. The Arabidopsis thaliana mobilome and its impact at the species level. eLife, [10.1007/978-1-0716-1134-0_15](https://doi.org/10.7554/eLife.15716), 06/2016.
-
-
 
 ## HOW-TO USE SPLITREADER
 
@@ -96,3 +89,11 @@ In `config.yml` you can give a value for `$SNAKEMAKE_THREADS`, that specify the 
 > Be careful with the number of cores you give via `--cores X` :
 > - If `--cores 10` and `$SNAKEMAKE_THREADS: 10`, then each multi-threadable rule will use 10 threads, but 10 threads are allocated here. So only one sample of your data will be treated at once.
 > - If `--cores 10` and `$SNAKEMAKE_THREADS: 2`, then each multi-threadable rule will use 2 threads, and 10 threads are allocated, so 5 samples will be treated at once. 
+
+
+### For citation
+
+**Baduel P**, Quadrana L, Colot V. Efficient detection of transposable element insertion polymorphisms between genomes using short-read sequencing data. Plant Transposable Elements, Methods in Molecular Biology, >
+
+**Quadrana L**, Bortolini Silveira A, Mayhew GF, LeBlanc C, Martienssen R, Jeddeloh JA, Colot V. The Arabidopsis thaliana mobilome and its impact at the species level. eLife, [10.1007/978-1-0716-1134-0_15](https:>
+
